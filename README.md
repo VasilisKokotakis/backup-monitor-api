@@ -23,6 +23,7 @@ This API provides:
 | Validation | Pydantic v2 + pydantic-settings |
 | Testing | pytest + httpx TestClient |
 | Containerization | Docker + docker-compose |
+| Rate Limiting | slowapi |
 
 ## API Endpoints
 
@@ -35,18 +36,20 @@ This API provides:
 ### Clients
 | Method | Path | Description |
 |---|---|---|
-| GET | `/clients` | List all clients |
+| GET | `/clients` | List all clients (supports `?skip` & `?limit`) |
 | POST | `/clients` | Create a client |
 | GET | `/clients/{id}` | Get a single client |
 
 ### Backup Jobs
 | Method | Path | Description |
 |---|---|---|
-| GET | `/clients/{id}/backups` | List all backup jobs for a client |
+| GET | `/clients/{id}/backups` | List backup jobs for a client (supports `?skip` & `?limit`) |
 | POST | `/clients/{id}/backups` | Register a new backup job |
 | GET | `/backups/summary` | Aggregated status counts + latest failure |
 
 All endpoints except `/auth/register` and `/auth/login` require a `Bearer` token.
+
+> **Rate limiting:** `/auth/register` is limited to 5 requests/minute per IP, `/auth/login` to 10 requests/minute per IP.
 
 ## Data Model
 
@@ -59,8 +62,8 @@ source        str         e.g. "Microsoft 365", "Salesforce"
 status        enum        PENDING | RUNNING | SUCCESS | FAILED | WARNING
 size_bytes    int | null  Backup size
 error_message str | null  Populated on failure
-started_at    datetime    Job start time
-finished_at   datetime    Job end time
+started_at    datetime    Set automatically when status is RUNNING
+finished_at   datetime    Set automatically when status is SUCCESS, FAILED, or WARNING
 created_at    datetime    Record creation (server default)
 ```
 
@@ -108,6 +111,7 @@ uvicorn app.main:app --reload
 | `DATABASE_URL` | PostgreSQL connection string |
 | `SECRET_KEY` | JWT signing secret (change in production) |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | Token TTL (default: 30) |
+| `ALLOWED_ORIGINS` | Comma-separated list of allowed CORS origins |
 
 See `.env.example` for reference.
 
