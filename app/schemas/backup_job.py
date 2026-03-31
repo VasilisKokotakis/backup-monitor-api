@@ -9,8 +9,6 @@ class BackupJobCreate(BaseModel):
     status: BackupStatus = BackupStatus.PENDING
     size_bytes: int | None = None
     error_message: str | None = Field(default=None, max_length=1000)
-    started_at: datetime | None = None
-    finished_at: datetime | None = None
 
 
 class BackupJobOut(BaseModel):

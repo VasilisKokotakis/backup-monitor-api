@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -48,7 +50,15 @@ def create_backup(
     current_user: User = Depends(get_current_user),
 ) -> BackupJob:
     _get_owned_client(client_id, current_user, db)
-    job = BackupJob(client_id=client_id, **payload.model_dump())
+    now = datetime.now(timezone.utc)
+    started_at = now if payload.status == BackupStatus.RUNNING else None
+    finished_at = now if payload.status in {BackupStatus.SUCCESS, BackupStatus.FAILED, BackupStatus.WARNING} else None
+    job = BackupJob(
+        client_id=client_id,
+        started_at=started_at,
+        finished_at=finished_at,
+        **payload.model_dump(),
+    )
     db.add(job)
     db.commit()
     db.refresh(job)
