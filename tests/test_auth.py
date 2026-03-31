@@ -1,6 +1,12 @@
 from fastapi.testclient import TestClient
 
 
+def test_health_check(client: TestClient) -> None:
+    resp = client.get("/health")
+    assert resp.status_code == 200
+    assert resp.json() == {"status": "ok"}
+
+
 def test_register_success(client: TestClient) -> None:
     resp = client.post("/auth/register", json={"email": "new@example.com", "password": "secret"})
     assert resp.status_code == 201
