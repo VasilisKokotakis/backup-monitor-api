@@ -1,14 +1,14 @@
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.models.backup_job import BackupStatus
 
 
 class BackupJobCreate(BaseModel):
-    source: str
+    source: str = Field(min_length=1, max_length=255)
     status: BackupStatus = BackupStatus.PENDING
     size_bytes: int | None = None
-    error_message: str | None = None
+    error_message: str | None = Field(default=None, max_length=1000)
     started_at: datetime | None = None
     finished_at: datetime | None = None
 

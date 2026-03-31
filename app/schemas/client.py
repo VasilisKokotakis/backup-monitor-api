@@ -1,9 +1,9 @@
 from datetime import datetime
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 
 class ClientCreate(BaseModel):
-    name: str
+    name: str = Field(min_length=1, max_length=255)
     contact_email: EmailStr
 
 
