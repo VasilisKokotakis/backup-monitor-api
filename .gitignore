@@ -8,3 +8,4 @@ test.db
 dist/
 .venv/
 venv/
+CLAUDE.md
