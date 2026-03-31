@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta, timezone
 
 from jose import JWTError, jwt
@@ -6,6 +7,8 @@ from passlib.context import CryptContext
 from app.config import settings
 from app.schemas.user import TokenData
 
+
+logger = logging.getLogger(__name__)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -31,5 +34,6 @@ def decode_access_token(token: str) -> TokenData:
         if user_id is None:
             raise JWTError("Missing subject claim")
         return TokenData(user_id=int(user_id))
-    except JWTError:
+    except JWTError as exc:
+        logger.warning("JWT decode failed: %s", exc)
         return TokenData(user_id=None)
