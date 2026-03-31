@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user
@@ -13,6 +13,8 @@ router = APIRouter(prefix="/clients", tags=["clients"])
 
 @router.get("", response_model=list[ClientOut])
 def list_clients(
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=20, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> list[Client]:
@@ -20,6 +22,8 @@ def list_clients(
         db.query(Client)
         .filter(Client.owner_id == current_user.id)
         .order_by(Client.created_at.desc())
+        .offset(skip)
+        .limit(limit)
         .all()
     )
 
