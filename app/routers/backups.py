@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -11,6 +12,8 @@ from app.models.client import Client
 from app.models.user import User
 from app.schemas.backup_job import BackupJobCreate, BackupJobOut, BackupSummary
 
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["backups"])
 
@@ -66,6 +69,7 @@ def create_backup(
     db.add(job)
     db.commit()
     db.refresh(job)
+    logger.info("Backup job created: id=%d client_id=%d status=%s", job.id, client_id, job.status.value)
     return job
 
 

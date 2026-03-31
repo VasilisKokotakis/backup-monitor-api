@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
@@ -7,6 +9,8 @@ from app.models.client import Client
 from app.models.user import User
 from app.schemas.client import ClientCreate, ClientOut
 
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/clients", tags=["clients"])
 
@@ -38,6 +42,7 @@ def create_client(
     db.add(client)
     db.commit()
     db.refresh(client)
+    logger.info("Client created: id=%d owner_id=%d", client.id, current_user.id)
     return client
 
 

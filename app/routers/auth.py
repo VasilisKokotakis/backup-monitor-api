@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -8,6 +10,8 @@ from app.models.user import User
 from app.schemas.user import Token, UserCreate, UserOut
 
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
@@ -15,6 +19,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 def register(payload: UserCreate, db: Session = Depends(get_db)) -> User:
     existing = db.query(User).filter(User.email == payload.email).first()
     if existing:
+        logger.warning("Registration attempt with already-registered email")
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Registration failed")
 
     user = User(
@@ -24,6 +29,7 @@ def register(payload: UserCreate, db: Session = Depends(get_db)) -> User:
     db.add(user)
     db.commit()
     db.refresh(user)
+    logger.info("New user registered: id=%d", user.id)
     return user
 
 
@@ -38,11 +44,13 @@ def login(
     """
     user = db.query(User).filter(User.email == form_data.username).first()
     if not user or not verify_password(form_data.password, user.hashed_password):
+        logger.warning("Failed login attempt for username=%s", form_data.username)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    logger.info("User logged in: id=%d", user.id)
     token = create_access_token(user.id)
     return Token(access_token=token)
