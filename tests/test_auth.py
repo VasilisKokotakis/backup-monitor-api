@@ -44,3 +44,21 @@ def test_login_wrong_password(client: TestClient) -> None:
 def test_protected_endpoint_without_token(client: TestClient) -> None:
     resp = client.get("/clients")
     assert resp.status_code == 401
+
+
+def test_malformed_token_is_rejected(client: TestClient) -> None:
+    resp = client.get("/clients", headers={"Authorization": "Bearer not.a.valid.token"})
+    assert resp.status_code == 401
+
+
+def test_expired_token_is_rejected(client: TestClient) -> None:
+    from datetime import datetime, timedelta, timezone
+    from jose import jwt
+
+    expired_payload = {
+        "sub": "1",
+        "exp": datetime.now(timezone.utc) - timedelta(minutes=1),
+    }
+    token = jwt.encode(expired_payload, "test-secret-key-not-for-production", algorithm="HS256")
+    resp = client.get("/clients", headers={"Authorization": f"Bearer {token}"})
+    assert resp.status_code == 401

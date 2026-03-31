@@ -57,3 +57,30 @@ def test_backup_job_unknown_client(client: TestClient, auth_headers: dict) -> No
         headers=auth_headers,
     )
     assert resp.status_code == 404
+
+
+def test_backup_job_invalid_status(client: TestClient, auth_headers: dict, client_id: int) -> None:
+    resp = client.post(
+        f"/clients/{client_id}/backups",
+        json={"source": "M365", "status": "INVALID_STATUS"},
+        headers=auth_headers,
+    )
+    assert resp.status_code == 422
+
+
+def test_backup_summary_cross_user_isolation(client: TestClient, auth_headers: dict, client_id: int) -> None:
+    # User A creates a FAILED backup job
+    client.post(
+        f"/clients/{client_id}/backups",
+        json={"source": "M365", "status": "FAILED", "error_message": "User A error"},
+        headers=auth_headers,
+    )
+
+    # User B registers, logs in, and checks their own summary
+    client.post("/auth/register", json={"email": "userb@example.com", "password": "password123"})
+    resp = client.post("/auth/login", data={"username": "userb@example.com", "password": "password123"})
+    user_b_headers = {"Authorization": f"Bearer {resp.json()['access_token']}"}
+
+    summary = client.get("/backups/summary", headers=user_b_headers).json()
+    assert summary["total"] == 0
+    assert summary["latest_failure"] is None
