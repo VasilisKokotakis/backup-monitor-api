@@ -2,6 +2,10 @@
 
 A REST API for tracking backup job statuses across multiple SaaS clients. Built to demonstrate production-ready Python backend patterns.
 
+## Live Demo
+
+Deployed at **https://backup-monitor-api.onrender.com** — interactive docs at [/docs](https://backup-monitor-api.onrender.com/docs).
+
 ## Overview
 
 The problem this solves: managed service providers (MSPs) run backup jobs for many clients across different sources (Microsoft 365, Salesforce, etc.). They need a central place to register those jobs, track their status lifecycle, and get a health summary at a glance.
@@ -114,6 +118,16 @@ uvicorn app.main:app --reload
 | `ALLOWED_ORIGINS` | Comma-separated list of allowed CORS origins |
 
 See `.env.example` for reference.
+
+## Deployment
+
+| Component | Platform | Why |
+|---|---|---|
+| API | [Render](https://render.com) (free web service) | Runs a persistent process — fits a stateful FastAPI app with its own SQLAlchemy connection pool and in-memory rate limiter, unlike serverless platforms (e.g. Vercel) built for stateless request handlers |
+| Database | [Neon](https://neon.tech) (free Postgres) | Free tier that doesn't expire, unlike Render's own free Postgres, which is deleted 30 days after creation |
+| Uptime | [UptimeRobot](https://uptimerobot.com) | Pings `/health` every 5 minutes so the free Render instance never spins down from inactivity |
+
+Migrations run automatically before each boot via the start command: `alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT`. The Python version is pinned via Render's `PYTHON_VERSION` env var to match the version used in `Dockerfile` and local development.
 
 ## Running Tests
 
